@@ -40,7 +40,7 @@ class LogStash::Filters::DeviceDetector < LogStash::Filters::Base
 
     # Set all fields
     begin
-      if !client.known?
+      if !data.known?
         @tag_on_unknown.each { |tag| event.tag(tag) }
       end
       if data.bot?
