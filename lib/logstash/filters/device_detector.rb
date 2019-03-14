@@ -20,7 +20,7 @@ class LogStash::Filters::DeviceDetector < LogStash::Filters::Base
 
     # Receive source
     useragent = event.get(@source)
-    return if useragent.nil? || useragent.empty?
+    return if useragent.nil? || useragent.strip == ""
 
     # Parse user-agent via device-detector
     begin
@@ -35,14 +35,19 @@ class LogStash::Filters::DeviceDetector < LogStash::Filters::Base
     event.remove(@source) if @target == @source
 
     # Set all fields
-    event.set("#{@target}[name]", data.name) if data.name
-    event.set("#{@target}[full_version]", data.full_version) if data.full_version
-    event.set("#{@target}[os_name]", data.os_name) if data.os_name
-    event.set("#{@target}[os_full_version]", data.os_full_version) if data.os_full_version
-    event.set("#{@target}[device_name]", data.device_name) if data.device_name
-    event.set("#{@target}[device_brand]", data.device_brand) if data.device_brand
-    event.set("#{@target}[device_type]", data.device_type) if data.device_type
-    event.set("#{@target}[bot_name]", data.bot_name) if data.bot_name
+    begin
+      event.set("#{@target}[browser][name]", data.name) if data.name
+      event.set("#{@target}[browser][version]", data.full_version) if data.full_version
+      event.set("#{@target}[os][name]", data.os_name) if data.os_name
+      event.set("#{@target}[os][version]", data.os_full_version) if data.os_full_version
+      event.set("#{@target}[device][name]", data.device_name) if data.device_name
+      event.set("#{@target}[device][brand]", data.device_brand) if data.device_brand
+      event.set("#{@target}[device][type]", data.device_type) if data.device_type
+      event.set("#{@target}[bot][name]", data.bot_name) if data.bot_name
+    rescue StandardError => e
+      @logger.error("Uknown error while setting device data", :exception => e, :field => @source, :event => event)
+      return
+    end
 
     filter_matched(event)
   end
